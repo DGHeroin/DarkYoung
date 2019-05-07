@@ -1,6 +1,19 @@
 # DarkYoung
 一个golang grpc双向流消息的简单封装.
 
+## 消息定义
+Tag可以很好的区别消息的类别.
+例如
+tag 1 表示用户注册消息
+tag 2 表示用户登录消息
+对应的tag就可以采用对应的消息格式进行 Unmarshal
+
+```go
+Tag   请求的消息tag
+Body  请求的消息体
+```
+
+
 ## 启动服务器
 ```go
 type Pong struct {}
