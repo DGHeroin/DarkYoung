@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+service Service {
+    rpc Send (stream Request) returns (stream Response) {}
+}
+message Request {
+    int32 id   = 1; // 请求 id
+    int32 tag  = 2; // tag
+    bytes body = 3; // 消息体
+}
+message Response {
+    int32 id     = 1; // 回复对应的请求 id
+    bytes body   = 2; // 消息体
+    int32 status = 3; // 处理消息的状态码
+}
+
