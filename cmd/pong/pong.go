@@ -8,9 +8,7 @@ import (
     "time"
 )
 
-type Pong struct {
-
-}
+type Pong struct {}
 
 var (
     qps = int64(0)
