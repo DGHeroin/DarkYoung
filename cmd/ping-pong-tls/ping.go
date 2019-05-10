@@ -24,13 +24,13 @@ func sendPing() {
             fmt.Println(err)
             continue
         }
-        go func() {
+        //go func() {
             data, status, err := request.Response()
             if err != nil {
                 fmt.Printf("data: %v %s, %v\n", status, data, err)
             }
-            return
-        }()
+
+        //}()
     }
 }
 

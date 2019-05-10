@@ -25,12 +25,12 @@ func sendPing() {
             continue
         }
 
-        go func() {
+        //go func() {
             data, status, err := request.Response(time.Second)
             if err != nil {
                 fmt.Printf("data: %v %s, %v\n", status, data, err)
             }
-        }()
+        //}()
     }
 }
 

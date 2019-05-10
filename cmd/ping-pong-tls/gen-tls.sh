@@ -11,11 +11,10 @@ openssl req -new -x509 -days ${DAYS} -key ca-key.pem -passin "pass:${PASSWORD}" 
 openssl genrsa -out server-key.pem 4096
 openssl req -subj "${SUBJ}" -sha256 -new -key server-key.pem -passin "pass:${PASSWORD}" -out server.csr
 
-
 echo subjectAltName = DNS:$DNS,IP:127.0.0.1 > extfile-server.cnf
 echo extendedKeyUsage = serverAuth >> extfile-server.cnf
 
-### 签名 server key
+#### 使用 server key 签名生成 server cert
 openssl x509 -req -days ${DAYS} -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile-server.cnf -passin "pass:${PASSWORD}"
 
 ### 创建客户端CA
@@ -23,7 +22,7 @@ openssl genrsa -out key.pem 4096
 openssl req -subj "${SUBJ}" -new -key key.pem -out client.csr -passin "pass:${PASSWORD}"
 echo extendedKeyUsage = clientAuth > extfile-client.cnf
 
-### 签名 client key
+#### 使用 client key 签名生成 client cert
 openssl x509 -req -days ${DAYS} -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out cert.pem -extfile extfile-client.cnf -passin "pass:${PASSWORD}"
 
 ### 修改权限
@@ -31,6 +30,10 @@ chmod 0400 ca.pem key.pem cert.pem
 chmod 0444 ca.pem server-key.pem server-cert.pem
 
 ### 各归其位
+rm -rf ca
+mkdir ca
+cp ca.pem ca-key.pem ca/
+
 rm -rf server
 mkdir -p server
 cp ca.pem server-cert.pem server-key.pem ./server
