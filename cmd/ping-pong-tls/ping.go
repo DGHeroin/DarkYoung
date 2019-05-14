@@ -8,6 +8,7 @@ import (
 
 var (
     remoteAddress = flag.String("r", "127.0.0.1:3000", "remote address")
+    connectionNum = flag.Int("c", 1, "connection num")
 )
 
 func sendPing() {
@@ -29,14 +30,16 @@ func sendPing() {
             if err != nil {
                 fmt.Printf("data: %v %s, %v\n", status, data, err)
             }
-
         //}()
     }
 }
 
 func main() {
     flag.Parse()
-    sendPing()
+    for i := 0; i < *connectionNum; i++ {
+        go sendPing()
+    }
+    select{}
 }
 
 

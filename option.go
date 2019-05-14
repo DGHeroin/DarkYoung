@@ -2,11 +2,11 @@ package DarkYoung
 
 // 服务器配置
 type serverOption struct {
-    onMessage func(id int64,
+    onMessage func(id int32,
         tag int32,
         request []byte) (response []byte, status int32) // 请求消息
-    onConnected func(id int64)                          // 连接上
-    onClosed    func(id int64)                          // 连接关闭
+    onConnected func(id int32)                          // 连接上
+    onClosed    func(id int32)                          // 连接关闭
     withTLS     bool                                    // 使用TLS
     certPath    string                                  // TLS cert 路径
     keyPath     string                                  // TLS key 路径
@@ -20,21 +20,21 @@ func defaultServerOption() serverOption {
 }
 
 // Option 连接上
-func WithServerOnAccept(onConnected func(id int64)) ServerOptionFunc {
+func WithServerOnAccept(onConnected func(id int32)) ServerOptionFunc {
     return func(option *serverOption) {
         option.onConnected = onConnected
     }
 }
 
 //
-func WithServerOnMessage(onMessage func(id int64, tag int32, request []byte) (response []byte, status int32)) ServerOptionFunc {
+func WithServerOnMessage(onMessage func(id int32, tag int32, request []byte) (response []byte, status int32)) ServerOptionFunc {
     return func(option *serverOption) {
         option.onMessage = onMessage
     }
 }
 
 // Option 连接上
-func WithServerOnClosed(onClosed func(id int64)) ServerOptionFunc {
+func WithServerOnClosed(onClosed func(id int32)) ServerOptionFunc {
     return func(option *serverOption) {
         option.onClosed = onClosed
     }

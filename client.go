@@ -2,20 +2,22 @@ package DarkYoung
 
 import (
     "context"
+    "fmt"
     proto "github.com/DGHeroin/DarkYoung/proto"
     "google.golang.org/grpc"
     "io"
 )
 
 type connectionType int
+
 const (
     connectionTypeInitiative connectionType = iota // 主动发起的连接
     connectionTypePassive                          // 服务端接收到的客户端
 )
 
 type client struct {
-    ctx context.Context
-    id            int64                    // 运行时id
+    ctx           context.Context
+    id            int32                    // 运行时id
     connState     connectionState          // 连接状态
     client        proto.Service_SendClient // 客户端实例
     conn          *grpc.ClientConn         // 作为客户端
@@ -63,7 +65,9 @@ func (c *client) Close() (err error) {
 // 客户端接收信息
 func (cli *client) clientRecv() {
     defer func() {
-        cli.Close()
+        if err := cli.Close(); err != nil {
+            fmt.Println(err)
+        }
     }()
     for {
         msg, err := cli.client.Recv()
@@ -110,7 +114,9 @@ func (cli *client) connectRemote() error {
         conn, err = grpc.Dial(cli.remoteAddress, grpc.WithInsecure())
     } else { // 使用 TLS
         creds, err := loadClientCredentials(cli.option.caPath, cli.option.certPath, cli.option.keyPath, "127.0.0.1")
-        if err != nil { return err }
+        if err != nil {
+            return err
+        }
         conn, err = grpc.Dial(cli.remoteAddress, grpc.WithTransportCredentials(creds))
     }
     if err != nil {

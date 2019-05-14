@@ -17,7 +17,7 @@ type server struct {
     //serviceType   serviceType  // 类型
     server   *grpc.Server // 作为服务端
     option   serverOption // 配置
-    clientId int64        // 没连接一个新连接自增 1
+    clientId int32        // 没连接一个新连接自增 1
 }
 
 // 关闭服务器
@@ -36,7 +36,9 @@ func (s *server) init(address string) error {
         s.server = grpc.NewServer()
     } else { // 使用 TLS X509
         creds, err := loadCredentials(s.option.caPath, s.option.certPath, s.option.keyPath)
-        if err != nil { return err }
+        if err != nil {
+            return err
+        }
 
         s.server = grpc.NewServer(grpc.Creds(creds))
     }
@@ -60,7 +62,7 @@ func (s *server) Send(stream proto.Service_SendServer) error {
     // 新的客户端连接
     cli := newAcceptClient(s.ctx)
     ctx := stream.Context()
-    cli.id = atomic.AddInt64(&s.clientId, 1)
+    cli.id = atomic.AddInt32(&s.clientId, 1)
     // OnClientConnected
     if s.option.onConnected != nil {
         s.option.onConnected(cli.id)

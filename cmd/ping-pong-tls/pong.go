@@ -34,17 +34,17 @@ func size(n int64) string {
     return fmt.Sprintf("%v%v", n, unit)
 }
 
-func (p *Pong) OnRequest(id int64, tag int32, request []byte) (response []byte, status int32) {
+func (p *Pong) OnRequest(id int32, tag int32, request []byte) (response []byte, status int32) {
     response = []byte("p")
     atomic.AddInt64(&qps, 1)
     return
 }
 
-func (p *Pong) OnNew(id int64) {
+func (p *Pong) OnNew(id int32) {
     fmt.Println("接收到新连接", id)
 }
 
-func (p *Pong) OnClosed(id int64) {
+func (p *Pong) OnClosed(id int32) {
     fmt.Println("连接断开", id)
 }
 
