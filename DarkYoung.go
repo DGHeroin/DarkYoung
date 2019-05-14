@@ -7,12 +7,14 @@ import (
 
 // 错误
 var (
-    errorTimeout = errors.New("Timeout")
-    errorNotConnected = errors.New("not connected")
+    errorTimeout        = errors.New("Timeout")
+    errorNotConnected   = errors.New("not connected")
+    errorClientNotFound = errors.New("client not found")
 )
 
 // 连接状态
 type connectionState int
+
 const (
     connectionStateInit          connectionState = iota // 初始化
     connectionStateConnecting                           // 连接中
@@ -29,6 +31,7 @@ type Client interface {
 
 type Server interface {
     Close() error
+    CloseClient(int32) error
 }
 
 // 创建服务器
@@ -41,6 +44,7 @@ func NewServer(address string, opts ...ServerOptionFunc) (Server, error) {
     s := &server{}
     s.ctx = context.Background()
     s.option = o
+    s.clients = make(map[int32]*client)
     err = s.init(address)
     return s, err
 }
@@ -73,4 +77,3 @@ func newAcceptClient(ctx context.Context) *client {
     cli.connectType = connectionTypePassive
     return cli
 }
-

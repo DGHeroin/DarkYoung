@@ -7,17 +7,19 @@ import (
     "google.golang.org/grpc"
     "io"
     "net"
+    "sync"
     "sync/atomic"
 )
 
 type server struct {
     ctx           context.Context
-    listener      net.Listener // rpc listener
-    listenAddress string       // 监听地址
-    //serviceType   serviceType  // 类型
-    server   *grpc.Server // 作为服务端
-    option   serverOption // 配置
-    clientId int32        // 没连接一个新连接自增 1
+    listener      net.Listener      // rpc listener
+    listenAddress string            // 监听地址
+    server        *grpc.Server      // 作为服务端
+    option        serverOption      // 配置
+    clientId      int32             // 没连接一个新连接自增 1
+    clients       map[int32]*client // 客户端
+    clientsMutex  sync.Mutex
 }
 
 // 关闭服务器
@@ -63,6 +65,16 @@ func (s *server) Send(stream proto.Service_SendServer) error {
     cli := newAcceptClient(s.ctx)
     ctx := stream.Context()
     cli.id = atomic.AddInt32(&s.clientId, 1)
+    s.clientsMutex.Lock()
+    s.clients[cli.id] = cli
+    s.clientsMutex.Unlock()
+
+    defer func() {
+        s.clientsMutex.Lock()
+        delete(s.clients, cli.id)
+        s.clientsMutex.Unlock()
+    }()
+
     // OnClientConnected
     if s.option.onConnected != nil {
         s.option.onConnected(cli.id)
@@ -98,4 +110,16 @@ func (s *server) Send(stream proto.Service_SendServer) error {
             }
         }
     }
+}
+
+func (s *server) CloseClient(id int32) (err error) {
+    s.clientsMutex.Lock()
+    if cli, ok := s.clients[id]; ok {
+        delete(s.clients, id)
+        err = cli.Close()
+    } else {
+        err = errorClientNotFound
+    }
+    s.clientsMutex.Unlock()
+    return
 }
