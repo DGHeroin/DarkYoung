@@ -63,9 +63,15 @@ func (s *server) Send(stream proto.Service_SendServer) error {
     // 新的客户端连接
     cli := newAcceptClient(s.ctx)
     ctx := stream.Context()
-    cli.id = atomic.AddInt32(&s.clientId, 1)
+    // 找到可用的id
     s.clientsMutex.Lock()
-    s.clients[cli.id] = cli
+    for {
+        cli.id = atomic.AddInt32(&s.clientId, 1)
+        if _, exist := s.clients[cli.id]; !exist {
+            s.clients[cli.id] = cli
+            break
+        }
+    }
     s.clientsMutex.Unlock()
 
     cli.stream = stream
