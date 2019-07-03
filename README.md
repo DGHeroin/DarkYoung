@@ -48,6 +48,14 @@ func startPong() {
 }
 ```
 
+### 服务器推送消息
+```go
+id   := 1           // your client connected id
+tag  := 100         // your tag
+body := []byte("0") // your data
+p.server.SendTo(id, tag, body)
+```
+
 ### 客户端发消息
 ```go
 func startPing() {
@@ -60,6 +68,13 @@ func startPing() {
         fmt.Printf("data: %v %s, %v\n", status, data, err)
     }
 }
+```
+
+### 客户端接受服务端推送消息
+```go
+ping.HandlePushMessageFunc(func(tag int32, body []byte) {
+    fmt.Printf("push data: %v %v\n", tag, body)
+})
 ```
 
 ### TLS使用方式
