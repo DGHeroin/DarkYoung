@@ -27,11 +27,13 @@ const (
 type Client interface {
     Request(int32, []byte) (*Request, error)
     Close() error
+    HandlePushMessageFunc(func(tag int32, body []byte))
 }
 
 type Server interface {
     Close() error
     CloseClient(int32) error
+    SendTo(int32, int32, []byte) error
 }
 
 // 创建服务器
@@ -66,6 +68,7 @@ func NewClient(address string, opts ...ClientOptionFunc) (Client, error) {
     if err := cli.connectRemote(); err != nil {
         return nil, err
     }
+
     return cli, nil
 }
 
@@ -77,3 +80,4 @@ func newAcceptClient(ctx context.Context) *client {
     cli.connectType = connectionTypePassive
     return cli
 }
+

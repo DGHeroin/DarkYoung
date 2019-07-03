@@ -19,7 +19,7 @@ type server struct {
     option        serverOption      // 配置
     clientId      int32             // 没连接一个新连接自增 1
     clients       map[int32]*client // 客户端
-    clientsMutex  sync.Mutex
+    clientsMutex  sync.RWMutex
 }
 
 // 关闭服务器
@@ -41,10 +41,9 @@ func (s *server) init(address string) error {
         if err != nil {
             return err
         }
-
         s.server = grpc.NewServer(grpc.Creds(creds))
     }
-
+    s.listenAddress = address
     proto.RegisterServiceServer(s.server, s)
     // 监听
     s.listener, err = net.Listen("tcp", address)
@@ -69,7 +68,14 @@ func (s *server) Send(stream proto.Service_SendServer) error {
     s.clients[cli.id] = cli
     s.clientsMutex.Unlock()
 
+    cli.stream = stream
+    cli.changeState(connectionStateConnected)
+
     defer func() {
+        cli.streamM.Lock()
+        cli.stream = nil
+        cli.streamM.Unlock()
+
         s.clientsMutex.Lock()
         delete(s.clients, cli.id)
         s.clientsMutex.Unlock()
@@ -90,7 +96,7 @@ func (s *server) Send(stream proto.Service_SendServer) error {
         case <-ctx.Done():
             return ctx.Err() // client stop sig
         default:
-            msg, err := stream.Recv()
+            msg, err := cli.RecvStream()
             if err == io.EOF {
                 cli.changeState(connectionStateDisconnected)
                 return nil // close by client
@@ -102,14 +108,23 @@ func (s *server) Send(stream proto.Service_SendServer) error {
             // OnClientData
             if s.option.onMessage != nil {
                 responseData, status := s.option.onMessage(cli.id, msg.Tag, msg.Body)
-                responseMsg := &proto.Response{Id: msg.Id, Body: responseData, Status: status}
-                if err := stream.Send(responseMsg); err != nil {
+                responseMsg := &proto.Response{Id: msg.Id, Body: responseData, Status: status, Type:0}
+
+                if err := cli.SendResponse(responseMsg); err != nil {
                     cli.changeState(connectionStateError)
-                    return err // send error
+                    return err
                 }
             }
         }
     }
+}
+
+func (s *server) String() string {
+    s.clientsMutex.RLock()
+    n := len(s.clients)
+    s.clientsMutex.RUnlock()
+
+    return fmt.Sprintf("{\"address\":\"%v\", \"clients\":%v}", s.listenAddress, n)
 }
 
 func (s *server) CloseClient(id int32) (err error) {
@@ -122,4 +137,15 @@ func (s *server) CloseClient(id int32) (err error) {
     }
     s.clientsMutex.Unlock()
     return
+}
+
+func (s *server) SendTo(id int32, tag int32, body []byte) (err error) {
+    s.clientsMutex.RLock()
+    cli, ok := s.clients[id]
+    s.clientsMutex.RUnlock()
+    if !ok || cli == nil {
+        err = errorClientNotFound
+        return
+    }
+    return cli.PushMessage(tag, body)
 }

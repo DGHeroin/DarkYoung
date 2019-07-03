@@ -10,7 +10,9 @@ message Request {
 }
 message Response {
     int32 id     = 1; // 回复对应的请求 id
-    bytes body   = 2; // 消息体
-    int32 status = 3; // 处理消息的状态码
+    int32 tag    = 2; // tag
+    bytes body   = 3; // 消息体
+    int32 status = 4; // 处理消息的状态码
+    int32 type   = 5; // 消息类型, 0 普通, 1 推送
 }
 
