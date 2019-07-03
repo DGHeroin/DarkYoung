@@ -22,7 +22,6 @@ type Pong struct {}
 
 func (p *Pong) OnRequest(id int64, tag int32, request []byte) (response []byte, status int32) {
     response = []byte("p")
-    atomic.AddInt64(&qps, 1)
     return
 }
 
